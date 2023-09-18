@@ -1,1 +1,4 @@
 datasets/
+.env
+/finishline/__pycache/
+/winnersapp/__pycache/
