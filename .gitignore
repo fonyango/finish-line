@@ -1,4 +1,4 @@
 datasets/
 .env
-/finishline/__pycache/
-/winnersapp/__pycache/
+finishline/__pycache__/
+winnersapp/__pycache__/
