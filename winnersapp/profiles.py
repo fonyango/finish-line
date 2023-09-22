@@ -1,10 +1,45 @@
 import pandas as pd
 import numpy as np
+from helpers.utils import Starter
 
 
+def get_athletes_profile_data(athleteID):
+    # set up db
+    starter = Starter()
+    db = starter.set_up_database()
 
+    # athletes data
+    query = {"athleteID":1,"name":1,"gender":1, "country":1}
+    filter_query = {"athleteID":athleteID}
+    athletes = db["athletes"]
+    athletes_df = starter.mongo_to_dataframe(list(athletes.find(filter_query,query)))
 
+    if athletes_df.empty==True:
+        
+        df = pd.DataFrame()
+        return df
 
+    else:
+        # races data
+        query = {"raceName":1,"athleteID":1,"marathonID":1,"timeTaken":1,"year":1,"worldRecord":1}
+        races = db["races"]
+        races_df = starter.mongo_to_dataframe(list(races.find(filter_query,query)))
+
+        # marathons data
+        query = {"marathonID":1,'marathonName':1, 'year':1}
+        marathon_ids = races_df['marathonID'].to_list()
+        filter_query = {"marathonID":{"$in":marathon_ids}}
+        marathons = db["marathons"]
+        marathon_df = starter.mongo_to_dataframe(list(marathons.find(filter_query,query)))
+
+        # merge the data
+        df = athletes_df.merge(races_df, on="athleteID",how='left')
+        df = df.merge(marathon_df, on='marathonID',how='left')
+
+        columns_to_drop = df.filter(like='_id').columns
+        df = df.drop(columns=columns_to_drop)
+    
+    return df
 
 
 class Marathons():
@@ -18,22 +53,37 @@ class Marathons():
         """
         self.data = data 
 
-    def get_athletes_summary(self):
+    def get_athletes_profile(self):
         """
-        Summarizes the number of athletes in each race and provides the total number of unique athletes.
+        Provides the athlete's profile
 
         Returns:
             dict: A dictionary containing the number of athletes in each race and the total number of unique athletes.
         """
-        total_athletes = self.data['AthleteID'].nunique()
-        summary_df = self.data.groupby('Race').agg(
-            num_athletes=('AthleteID',pd.Series.nunique)).reset_index()
-        
-        race_summary_list = summary_df.to_dict('records')
-        race_summary = {item['Race']: item['num_athletes'] for item in race_summary_list}
-        race_summary['totalAthletes'] = total_athletes
 
-        return race_summary
+        athlete_name = self.data['name'].drop_duplicates().tolist()[0]
+        gender = self.data['gender'].drop_duplicates().tolist()[0]
+        country = self.data['country'].drop_duplicates().tolist()[0]
+        race = self.data['raceName'].drop_duplicates().tolist()[0]
+        num_wins = self.data['raceName'].count()
+        num_marathons = self.data['marathonID'].nunique()
+        fastest_time = self.data['timeTaken'].min()
+        first_win = self.data['year'].min()
+        last_win = self.data['year'].max()
+
+        result = {
+            "name":athlete_name,
+            "gender":gender,
+            "country":country,
+            "race":race,
+            "num_wins":num_wins,
+            "num_marathons":num_marathons,
+            "best_time":fastest_time,
+            "first_win":first_win,
+            "last_win":last_win
+        }
+
+        return result
 
     def get_marathons_summary(self):
         """
@@ -42,14 +92,6 @@ class Marathons():
         Returns:
             list of dict: A list of dictionaries, each containing summary information for a marathon.
         """
-        num_marathons = self.data['Marathon'].nunique()
-        marathons_summary = self.data.groupby(['Marathon','Race']).agg(
-                    num_winners=('AthleteID',pd.Series.nunique),
-                    num_countries=('Country',pd.Series.nunique),
-                    num_years=('Year',pd.Series.nunique)
-                    ).reset_index()
-        
-        marathons_summary_list = marathons_summary.to_dict('records')
 
-        return marathons_summary_list 
+        pass
         
