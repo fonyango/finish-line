@@ -14,15 +14,17 @@ class winnerssViewset(viewsets.ViewSet):
                 athlete_id = request.data['athlete_id']
                 df = get_athletes_profile_data(athlete_id)
                 
+                # check if 'athleteid' not there ==> dataframe is empty
                 if df.empty==True:
 
                     return Response({
-                                "Success": True, 
+                                "Success": False, 
                                 "Status": status.HTTP_204_NO_CONTENT, 
                                 "Message": "No data found", 
                                 "Payload": None
                                 })
-
+                                
+                # instantiate Marathon class
                 marathons = Marathons(df)
                 result = marathons.get_athletes_profile()
 
