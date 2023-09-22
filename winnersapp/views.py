@@ -1,7 +1,15 @@
 import pandas as pd
 from rest_framework.response import Response
 from rest_framework import viewsets, status
-from .profiles import Marathons, get_athletes_profile_data
+from .profiles import Marathons, DataExtractor
+from helpers.utils import Starter
+
+
+# instantiate Starter & DataExtractor class
+starter = Starter()
+db = starter.set_up_database()
+data_extractor = DataExtractor(db)
+
 
 class winnerssViewset(viewsets.ViewSet):
 
@@ -12,7 +20,7 @@ class winnerssViewset(viewsets.ViewSet):
         try:
             if request.method=='POST':
                 athlete_id = request.data['athlete_id']
-                df = get_athletes_profile_data(athlete_id)
+                df = data_extractor.get_athletes_profile_data(athlete_id)
                 
                 # check if 'athleteid' not there ==> dataframe is empty
                 if df.empty==True:
