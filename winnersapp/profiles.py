@@ -33,7 +33,7 @@ class DataExtractor():
             races_df = starter.mongo_to_dataframe(list(races.find(filter_query,query)))
 
             # marathons data
-            query = {"marathonID":1,'marathonName':1, 'year':1}
+            query = {"marathonID":1,'marathonName':1}
             marathon_ids = races_df['marathonID'].to_list()
             filter_query = {"marathonID":{"$in":marathon_ids}}
             marathons = self.db["marathons"]
@@ -47,6 +47,44 @@ class DataExtractor():
             profile_df = profile_df.drop(columns=columns_to_drop)
         
         return profile_df
+
+    def get_marathon_profile_data(self, marathonID):
+
+        # marathons data
+        query = {"marathonID":1,'marathonName':1}
+        filter_query = {"marathonID":marathonID}
+        marathons = self.db["marathons"]
+        marathon_df = starter.mongo_to_dataframe(list(marathons.find(filter_query,query)))
+
+        if marathon_df.empty==True:
+
+            return pd.DataFrame()
+
+        else:
+
+            # races data
+            query = {"raceName":1,"athleteID":1,"marathonID":1,"year":1}
+            marathon_ids = marathon_df['marathonID'].to_list() 
+            filter_query = {"marathonID":{"$in":marathon_ids}}
+            races = self.db["races"]
+            races_df = starter.mongo_to_dataframe(list(races.find(filter_query,query)))
+
+
+            # athletes data
+            query = {"athleteID":1,"name":1,"country":1}
+            athlete_ids = races_df['athleteID'].to_list()
+            filter_query = {"athleteID":{"$in":athlete_ids}}
+            athletes = self.db["athletes"]
+            athletes_df = starter.mongo_to_dataframe(list(athletes.find(filter_query,query)))
+
+            # merge the data
+            combined_df = marathon_df.merge(races_df, on="marathonID",how='left')
+            combined_df = combined_df.merge(athletes_df, on='athleteID',how='left')
+
+            columns_to_drop = combined_df.filter(like='_id').columns
+            combined_df = combined_df.drop(columns=columns_to_drop)
+
+        return combined_df
 
 
 class Marathons():
@@ -100,5 +138,19 @@ class Marathons():
             list of dict: A list of dictionaries, each containing summary information for a marathon.
         """
 
-        pass
+        marathon_name = self.data['marathonName'].drop_duplicates().tolist()[0]
+        num_races = self.data['raceName'].nunique()
+        num_countries = self.data['country'].nunique()
+        first_time = self.data['year'].min()
+        last_time = self.data['year'].max()
+
+        result = {
+            "name":marathon_name,
+            "num_countries":num_countries,
+            "num_races":num_races,
+            "first_time":first_time,
+            "last_time":last_time
+        }
+
+        return result
         
