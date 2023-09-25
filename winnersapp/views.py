@@ -88,3 +88,41 @@ class winnersViewset(viewsets.ViewSet):
                                 "Status": status.HTTP_501_NOT_IMPLEMENTED, \
                                 "Message":"An error was encountered during execution"
                             })
+    
+    def get_country_performance(self, request):
+        """
+        returns the summary of country performance
+        """
+        try:
+            if request.method=='GET':
+               
+                df = data_extractor.get_country_performance_data()
+                
+                # check if dataframe is empty
+                if df.empty==True:
+
+                    return Response({
+                                "Success": False, 
+                                "Status": status.HTTP_204_NO_CONTENT, 
+                                "Message": "No data found", 
+                                "Payload": None
+                                })
+                                
+                # instantiate Marathon class
+                marathons = Marathons(df)
+                result = marathons.get_country_summary()
+
+            return Response({
+                                "Success": True, 
+                                "Status": status.HTTP_200_OK, 
+                                "Message": "Successful", 
+                                "Payload": result
+                                })
+
+        except Exception as e:
+            print(e)
+            return Response({
+                                "Success": False, 
+                                "Status": status.HTTP_501_NOT_IMPLEMENTED, \
+                                "Message":"An error was encountered during execution"
+                            })
