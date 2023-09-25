@@ -199,7 +199,19 @@ class Marathons():
                         num_athletes=('athleteID', np.size)
                     ).reset_index()
 
-        result = country_df.to_dict('records')
+        # Create nested dictionaries
+        nested_dict = {}
 
-        return result
+        for idx, row in country_df.iterrows():
+            current_dict = nested_dict
+            for key in ['country', 'marathonName', 'raceName']:
+                value = row[key]
+                if value not in current_dict:
+                    if key == 'raceName':
+                        current_dict[value] = row['num_athletes']
+                    else:
+                        current_dict[value] = {}
+                current_dict = current_dict[value]
+
+        return nested_dict
         
