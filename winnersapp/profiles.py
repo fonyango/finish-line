@@ -13,111 +13,125 @@ class DataExtractor():
 
     def get_athletes_profile_data(self,athleteID):
         
+        try:
+            # athletes data
+            query = {"athleteID":1,"name":1,"gender":1, "country":1}
+            filter_query = {"athleteID":athleteID}
+            athletes = self.db["athletes"]
+            athletes_df = starter.mongo_to_dataframe(list(athletes.find(filter_query,query)))
 
-        # athletes data
-        query = {"athleteID":1,"name":1,"gender":1, "country":1}
-        filter_query = {"athleteID":athleteID}
-        athletes = self.db["athletes"]
-        athletes_df = starter.mongo_to_dataframe(list(athletes.find(filter_query,query)))
+            if athletes_df.empty==True:
+                
+                profile_df = pd.DataFrame()
 
-        if athletes_df.empty==True:
+                return profile_df
+
+            else:
+                # races data
+                query = {"raceName":1,"athleteID":1,"marathonID":1,"timeTaken":1,"year":1,"worldRecord":1}
+                races = self.db["races"]
+                races_df = starter.mongo_to_dataframe(list(races.find(filter_query,query)))
+
+                # marathons data
+                query = {"marathonID":1,'marathonName':1}
+                marathon_ids = races_df['marathonID'].to_list()
+                filter_query = {"marathonID":{"$in":marathon_ids}}
+                marathons = self.db["marathons"]
+                marathon_df = starter.mongo_to_dataframe(list(marathons.find(filter_query,query)))
+
+                # merge the data
+                profile_df = athletes_df.merge(races_df, on="athleteID",how='left')
+                profile_df = profile_df.merge(marathon_df, on='marathonID',how='left')
+
+                columns_to_drop = profile_df.filter(like='_id').columns
+                profile_df = profile_df.drop(columns=columns_to_drop)
             
-            profile_df = pd.DataFrame()
-
             return profile_df
 
-        else:
-            # races data
-            query = {"raceName":1,"athleteID":1,"marathonID":1,"timeTaken":1,"year":1,"worldRecord":1}
-            races = self.db["races"]
-            races_df = starter.mongo_to_dataframe(list(races.find(filter_query,query)))
+        except Exception as e:
+            print(f"Error in get_athletes_profile_data: {str(e)}")
+            return None
 
+
+    def get_marathon_profile_data(self, marathonID):
+        try:
             # marathons data
             query = {"marathonID":1,'marathonName':1}
-            marathon_ids = races_df['marathonID'].to_list()
-            filter_query = {"marathonID":{"$in":marathon_ids}}
+            filter_query = {"marathonID":marathonID}
             marathons = self.db["marathons"]
             marathon_df = starter.mongo_to_dataframe(list(marathons.find(filter_query,query)))
 
-            # merge the data
-            profile_df = athletes_df.merge(races_df, on="athleteID",how='left')
-            profile_df = profile_df.merge(marathon_df, on='marathonID',how='left')
+            if marathon_df.empty==True:
 
-            columns_to_drop = profile_df.filter(like='_id').columns
-            profile_df = profile_df.drop(columns=columns_to_drop)
-        
-        return profile_df
+                return pd.DataFrame()
 
-    def get_marathon_profile_data(self, marathonID):
+            else:
 
-        # marathons data
-        query = {"marathonID":1,'marathonName':1}
-        filter_query = {"marathonID":marathonID}
-        marathons = self.db["marathons"]
-        marathon_df = starter.mongo_to_dataframe(list(marathons.find(filter_query,query)))
-
-        if marathon_df.empty==True:
-
-            return pd.DataFrame()
-
-        else:
-
-            # races data
-            query = {"raceName":1,"athleteID":1,"marathonID":1,"year":1}
-            marathon_ids = marathon_df['marathonID'].to_list() 
-            filter_query = {"marathonID":{"$in":marathon_ids}}
-            races = self.db["races"]
-            races_df = starter.mongo_to_dataframe(list(races.find(filter_query,query)))
+                # races data
+                query = {"raceName":1,"athleteID":1,"marathonID":1,"year":1}
+                marathon_ids = marathon_df['marathonID'].to_list() 
+                filter_query = {"marathonID":{"$in":marathon_ids}}
+                races = self.db["races"]
+                races_df = starter.mongo_to_dataframe(list(races.find(filter_query,query)))
 
 
-            # athletes data
-            query = {"athleteID":1,"name":1,"country":1}
-            athlete_ids = races_df['athleteID'].to_list()
-            filter_query = {"athleteID":{"$in":athlete_ids}}
-            athletes = self.db["athletes"]
-            athletes_df = starter.mongo_to_dataframe(list(athletes.find(filter_query,query)))
+                # athletes data
+                query = {"athleteID":1,"name":1,"country":1}
+                athlete_ids = races_df['athleteID'].to_list()
+                filter_query = {"athleteID":{"$in":athlete_ids}}
+                athletes = self.db["athletes"]
+                athletes_df = starter.mongo_to_dataframe(list(athletes.find(filter_query,query)))
 
-            # merge the data
-            combined_df = marathon_df.merge(races_df, on="marathonID",how='left')
-            combined_df = combined_df.merge(athletes_df, on='athleteID',how='left')
+                # merge the data
+                combined_df = marathon_df.merge(races_df, on="marathonID",how='left')
+                combined_df = combined_df.merge(athletes_df, on='athleteID',how='left')
 
-            columns_to_drop = combined_df.filter(like='_id').columns
-            combined_df = combined_df.drop(columns=columns_to_drop)
+                columns_to_drop = combined_df.filter(like='_id').columns
+                combined_df = combined_df.drop(columns=columns_to_drop)
 
-        return combined_df
+            return combined_df
+
+        except Exception as e:
+            print(f"Error while extracting marathon profile data: {str(e)}")
+            return None
 
     def get_country_performance_data(self):
-        # marathons data
-        query = {"marathonID":1,'marathonName':1}
-        marathons = self.db["marathons"]
-        marathon_df = starter.mongo_to_dataframe(list(marathons.find({},query)))
+        try:
+            # marathons data
+            query = {"marathonID":1,'marathonName':1}
+            marathons = self.db["marathons"]
+            marathon_df = starter.mongo_to_dataframe(list(marathons.find({},query)))
 
-        if marathon_df.empty==True:
-            return pd.DataFrame()
+            if marathon_df.empty==True:
+                return pd.DataFrame()
 
-        else:
-            # races data
-            query = {"raceName":1,"athleteID":1,"marathonID":1,"year":1}
-            marathon_ids = marathon_df['marathonID'].to_list() 
-            filter_query = {"marathonID":{"$in":marathon_ids}}
-            races = self.db["races"]
-            races_df = starter.mongo_to_dataframe(list(races.find(filter_query,query)))
+            else:
+                # races data
+                query = {"raceName":1,"athleteID":1,"marathonID":1,"year":1}
+                marathon_ids = marathon_df['marathonID'].to_list() 
+                filter_query = {"marathonID":{"$in":marathon_ids}}
+                races = self.db["races"]
+                races_df = starter.mongo_to_dataframe(list(races.find(filter_query,query)))
 
-            # athletes data
-            query = {"athleteID":1,"name":1,"country":1}
-            athlete_ids = races_df['athleteID'].to_list()
-            filter_query = {"athleteID":{"$in":athlete_ids}}
-            athletes = self.db["athletes"]
-            athletes_df = starter.mongo_to_dataframe(list(athletes.find(filter_query,query)))
+                # athletes data
+                query = {"athleteID":1,"name":1,"country":1}
+                athlete_ids = races_df['athleteID'].to_list()
+                filter_query = {"athleteID":{"$in":athlete_ids}}
+                athletes = self.db["athletes"]
+                athletes_df = starter.mongo_to_dataframe(list(athletes.find(filter_query,query)))
 
-            # merge the data
-            combined_df = marathon_df.merge(races_df, on="marathonID",how='left')
-            combined_df = combined_df.merge(athletes_df, on='athleteID',how='left')
+                # merge the data
+                combined_df = marathon_df.merge(races_df, on="marathonID",how='left')
+                combined_df = combined_df.merge(athletes_df, on='athleteID',how='left')
 
-            columns_to_drop = combined_df.filter(like='_id').columns
-            combined_df = combined_df.drop(columns=columns_to_drop)
+                columns_to_drop = combined_df.filter(like='_id').columns
+                combined_df = combined_df.drop(columns=columns_to_drop)
+          
+            return combined_df
 
-        return combined_df
+        except Exception as e:
+            print(f"Error while extracting country performance:{str(e)}")
+            return None
 
 class Marathons():
 
