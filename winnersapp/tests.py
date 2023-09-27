@@ -1,7 +1,11 @@
 import pandas as pd
 from django.test import TestCase
+from rest_framework import status
+from rest_framework.test import APIRequestFactory
+from .views import winnersViewset
 from .profiles import DataExtractor
 from helpers.utils import Starter
+
 
 starter = Starter()
 db = starter.set_up_database()
@@ -81,4 +85,72 @@ class DataExtractionTestCase(TestCase):
         self.assertTrue(set(result.columns).issubset(required_columns))
 
 
+class winnersViewsetTest(TestCase):
+
+    def setUp(self):
+        self.factory = APIRequestFactory()
+
+    def test_get_athletes_summary(self):
+        view = winnersViewset.as_view({'post':'get_athletes_summary'})
+        data = {'athlete_id':"S3eOo9"}
+        request = self.factory.post('profile/', data)
+        response = view(request)
+        self.assertEqual(response.data['Status'], status.HTTP_200_OK)
+        self.assertEqual(response.data['Success'], True)
+        self.assertEqual(response.data['Message'],"Successful")
         
+    def test_get_athletes_summary_empty_df(self):
+        view = winnersViewset.as_view({'post':'get_athletes_summary'})
+        data = {"athlete_id":1} # this id is not there
+        request = self.factory.post('profile/',data)
+        response = view(request)
+        self.assertEqual(response.data['Status'], status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.data['Success'], False)
+        self.assertEqual(response.data['Message'], "No Data Found")
+
+    def test_get_athletes_summary_get(self):
+        view = winnersViewset.as_view({'get':'get_athletes_summary'})
+        request = self.factory.get('profile/')
+        response = view(request)
+        self.assertEqual(response.data["Status"], status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.data['Success'], False)
+
+    def test_get_marathons_profile(self):
+        view = winnersViewset.as_view({'post':'get_marathons_profile'})
+        data = {'marathon_id':"OhbVrpoiVg"}
+        request = self.factory.post('marathon/', data)
+        response = view(request)
+        self.assertEqual(response.data['Status'], status.HTTP_200_OK)
+        self.assertEqual(response.data['Success'], True)
+        self.assertEqual(response.data['Message'],"Successful")
+     
+    def test_get_marathons_profile_empty_df(self):
+        view = winnersViewset.as_view({'post':'get_marathons_profile'})
+        data = {"marathon_id":1} # this id is not there
+        request = self.factory.post('marathon/',data)
+        response = view(request)
+        self.assertEqual(response.data['Status'], status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.data['Success'], False)
+        self.assertEqual(response.data['Message'], "No Data Found")
+
+    def test_get_marathons_profile_get(self):
+        view = winnersViewset.as_view({'get':'get_marathons_profile'})
+        request = self.factory.get('marathon/')
+        response = view(request)
+        self.assertEqual(response.data["Status"], status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.data['Success'], False)
+
+    def test_get_country_performance(self):
+        view = winnersViewset.as_view({'get':'get_country_performance'})
+        request = self.factory.get('country-performance/')
+        response = view(request)
+        self.assertEqual(response.data["Status"], status.HTTP_200_OK)
+        self.assertEqual(response.data['Success'], True)
+        self.assertEqual(response.data['Message'],"Successful")
+
+    def test_get_country_performance_post(self):
+        view = winnersViewset.as_view({'post':'get_country_performance'})
+        request = self.factory.post('country-performance/')
+        response = view(request)
+        self.assertEqual(response.data["Status"], status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.data['Success'], False)
