@@ -28,7 +28,7 @@ class winnersViewset(viewsets.ViewSet):
                     return Response({
                                 "Success": False, 
                                 "Status": status.HTTP_204_NO_CONTENT, 
-                                "Message": "No data found", 
+                                "Message": "No Data Found", 
                                 "Payload": None
                                 })
                                 
@@ -36,12 +36,20 @@ class winnersViewset(viewsets.ViewSet):
                 marathons = Marathons(df)
                 result = marathons.get_athletes_profile()
 
-            return Response({
-                                "Success": True, 
-                                "Status": status.HTTP_200_OK, 
-                                "Message": "Successful", 
-                                "Payload": result
-                                })
+                return Response({
+                                    "Success": True, 
+                                    "Status": status.HTTP_200_OK, 
+                                    "Message": "Successful", 
+                                    "Payload": result
+                                    })
+            else:
+                return Response({
+                            "Success": False, 
+                            "Status": status.HTTP_405_METHOD_NOT_ALLOWED, 
+                            "Message": "Method Not Allowed", 
+                            "Payload": None
+                            })
+
 
         except Exception as e:
             print(e)
