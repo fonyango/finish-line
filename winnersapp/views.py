@@ -118,21 +118,29 @@ class winnersViewset(viewsets.ViewSet):
                 if df.empty==True:
 
                     return Response({
-                                "Success": False, 
-                                "Status": status.HTTP_204_NO_CONTENT, 
-                                "Message": "No data found", 
-                                "Payload": None
-                                })
+                                    "Success": False, 
+                                    "Status": status.HTTP_204_NO_CONTENT, 
+                                    "Message": "No Data Found", 
+                                    "Payload": None
+                                    })
                                 
                 # instantiate Marathon class
                 marathons = Marathons(df)
                 result = marathons.get_country_summary()
 
-            return Response({
-                                "Success": True, 
-                                "Status": status.HTTP_200_OK, 
-                                "Message": "Successful", 
-                                "Payload": result
+                return Response({
+                                    "Success": True, 
+                                    "Status": status.HTTP_200_OK, 
+                                    "Message": "Successful", 
+                                    "Payload": result
+                                    })
+
+            else:
+                return Response({
+                                "Success": False, 
+                                "Status": status.HTTP_405_METHOD_NOT_ALLOWED, 
+                                "Message": "Method Not Allowed", 
+                                "Payload": None
                                 })
 
         except Exception as e:

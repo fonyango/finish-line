@@ -139,3 +139,18 @@ class winnersViewsetTest(TestCase):
         response = view(request)
         self.assertEqual(response.data["Status"], status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(response.data['Success'], False)
+
+    def test_get_country_performance(self):
+        view = winnersViewset.as_view({'get':'get_country_performance'})
+        request = self.factory.get('country-performance/')
+        response = view(request)
+        self.assertEqual(response.data["Status"], status.HTTP_200_OK)
+        self.assertEqual(response.data['Success'], True)
+        self.assertEqual(response.data['Message'],"Successful")
+
+    def test_get_country_performance_post(self):
+        view = winnersViewset.as_view({'post':'get_country_performance'})
+        request = self.factory.post('country-performance/')
+        response = view(request)
+        self.assertEqual(response.data["Status"], status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.data['Success'], False)
