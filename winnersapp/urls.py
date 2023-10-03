@@ -7,5 +7,7 @@ urlpatterns = [
     path('marathon/', winnersViewset.as_view({'post':"get_marathons_profile"}),
         name='marathon'),
     path('country-performance/', winnersViewset.as_view({'get':"get_country_performance"}),
-        name='country-performance')
+        name='country-performance'),
+    path('race-trends/', winnersViewset.as_view({'post':"get_race_time_trends"}),
+        name='race-trends')
 ]
