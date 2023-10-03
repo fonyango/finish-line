@@ -150,3 +150,51 @@ class winnersViewset(viewsets.ViewSet):
                                 "Status": status.HTTP_501_NOT_IMPLEMENTED, \
                                 "Message":"An error was encountered during execution"
                             })
+
+    def get_race_time_trends(self, request):
+        """
+        returns timetaken for the race of the marathon
+        """
+        try:
+            if request.method=='POST':
+                raceID = request.data['raceID']
+                marathonID = request.data['marathonID']
+
+                df = data_extractor.get_athlete_best_times_data(raceID,marathonID)
+                
+                # check if dataframe is empty
+                if df.empty==True:
+
+                    return Response({
+                                    "Success": False, 
+                                    "Status": status.HTTP_204_NO_CONTENT, 
+                                    "Message": "No Data Found", 
+                                    "Payload": None
+                                    })
+                                
+                # instantiate Marathon class
+                marathons = Marathons(df)
+                result = marathons.get_athlete_best_times()
+
+                return Response({
+                                    "Success": True, 
+                                    "Status": status.HTTP_200_OK, 
+                                    "Message": "Successful", 
+                                    "Payload": result
+                                    })
+
+            else:
+                return Response({
+                                "Success": False, 
+                                "Status": status.HTTP_405_METHOD_NOT_ALLOWED, 
+                                "Message": "Method Not Allowed", 
+                                "Payload": None
+                                })
+
+        except Exception as e:
+            print(e)
+            return Response({
+                                "Success": False, 
+                                "Status": status.HTTP_501_NOT_IMPLEMENTED, \
+                                "Message":"An error was encountered during execution"
+                            })
