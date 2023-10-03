@@ -133,6 +133,27 @@ class DataExtractor():
             print(f"Error while extracting country performance:{str(e)}")
             return None
 
+    def get_athlete_best_times_data(self, raceID, marathonID):
+        try:            
+            # races data
+            query = {"marathonID":1,"timeTaken":1,"year":1}
+            filter_query = {"marathonID":marathonID,"raceID":raceID}
+            races = self.db["races"]
+            races_df = starter.mongo_to_dataframe(list(races.find(filter_query,query)))
+
+            columns_to_drop = races_df.filter(like='_id').columns
+            races_df = races_df.drop(columns=columns_to_drop)
+            races_df.drop(columns=['marathonID'],inplace=True)
+
+            if races_df.empty==True:
+                return pd.DataFrame()
+            
+            return races_df
+
+        except Exception as e:
+            print(f"Error while extracting marathon profile data: {str(e)}")
+            return None
+
 class Marathons():
 
     def __init__(self,data):
